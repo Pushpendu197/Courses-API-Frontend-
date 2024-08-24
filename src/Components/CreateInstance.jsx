@@ -5,7 +5,7 @@ import { faMagnifyingGlass, faTrash, faUserPen } from '@fortawesome/free-solid-s
 import { Link } from 'react-router-dom';
 import { addinstances, deleteinstances, getinstances, updateinstances } from '../services/ApiServicesInstance';
 import { getcourse } from '../services/ApiService'; // Import the getcourse function
-import InstanceDetailsModal from './InstanceDetailsModal';
+
 
 const CreateInstance = () => {
     const [instances, setInstances] = useState([]);
@@ -14,6 +14,9 @@ const CreateInstance = () => {
     const [viewingInstance, setViewingInstance] = useState(null); // State to manage the viewing details modal
     const [searchYear, setSearchYear] = useState('');
     const [searchSemester, setSearchSemester] = useState('');
+
+    // Get unique semesters
+    const uniqueSemesters = [...new Set(instances.map(instance => instance.instances_sem))];
 
     useEffect(() => {
         getinstances().then(res => {
@@ -133,13 +136,18 @@ const CreateInstance = () => {
                                 </div>
                                 <label className='col-sm-3 col-form-label'>Semester : </label>
                                 <div className='col-sm-3'>
-                                    <input
+                                    <select
                                         className='form-control'
                                         value={searchSemester}
                                         onChange={(e) => setSearchSemester(e.target.value)}
-                                        placeholder='Enter Semester'
-                                    />
+                                    >
+                                        <option value="">Select Semester</option>
+                                        {uniqueSemesters.map((sem, index) => (
+                                            <option key={index} value={sem}>{sem}</option>
+                                        ))}
+                                    </select>
                                 </div>
+
                             </span>
 
 

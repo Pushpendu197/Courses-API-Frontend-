@@ -12,6 +12,8 @@ const CreateInstance = () => {
     const [courses, setCourses] = useState([]); // State to store courses
     const [editingInstances, setEditingInstances] = useState(null);
     const [viewingInstance, setViewingInstance] = useState(null); // State to manage the viewing details modal
+    const [searchYear, setSearchYear] = useState('');
+    const [searchSemester, setSearchSemester] = useState('');
 
     useEffect(() => {
         getinstances().then(res => {
@@ -56,12 +58,27 @@ const CreateInstance = () => {
         });
     }
 
+    // Function to get the course code based on course title
+    const getCourseCodeByTitle = (title) => {
+        const course = courses.find(c => c.course_title === title);
+        return course ? course.course_code : 'N/A';
+    };
+
+    // Function to filter instances based on search criteria
+    const filteredInstances = instances.filter(instance =>
+        (searchYear ? instance.instances_year === searchYear : true) &&
+        (searchSemester ? instance.instances_sem === searchSemester : true)
+    );
+
+    // Get unique semesters for the dropdown
+    const uniqueSemesters = [...new Set(instances.map(instance => instance.instances_sem))];
+
     return (
         <>
             <div className='createUser'>
                 <div className='container-create my-2'>
-                    <div className='row '>
-                        <div className='col-md-5 mx-auto rounded border p-4 '>
+                    <div className='row'>
+                        <div className='col-md-5 mx-auto rounded border p-4'>
                             <h3 className='text-center mb-4'>Create Instances</h3>
 
                             <form onSubmit={handleAddSubmit}>
@@ -79,15 +96,20 @@ const CreateInstance = () => {
                                     </div>
                                 </div>
                                 <div className='row mb-3'>
-                                    <label className='col-sm-4 col-form-label'>Instance Year</label>
+                                    <label className='col-sm-4 col-form-label'>Year</label>
                                     <div className='col-sm-8'>
-                                        <input className='form-control text-capitalize' name='instances_year' placeholder='Instances Year' required />
+                                        <input className='form-control text-capitalize' name='instances_year' placeholder='Year' required />
                                     </div>
                                 </div>
                                 <div className='row mb-3'>
-                                    <label className='col-sm-4 col-form-label'>Instance Semester</label>
+                                    <label className='col-sm-4 col-form-label'>Semester</label>
                                     <div className='col-sm-8'>
-                                        <input className='form-control text-capitalize' name='instances_sem' placeholder='Instances Semester' required />
+                                        <select className='form-control text-capitalize' name='instances_sem' required>
+                                            <option value="">Select Semester</option>
+                                            {uniqueSemesters.map((sem, index) => (
+                                                <option key={index} value={sem}>{sem}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                                 <div className='row'>
@@ -101,24 +123,58 @@ const CreateInstance = () => {
                     </div>
                 </div>
 
+                {/* Search Section */}
+                <div className='container-search my-2'>
+                    <div className='row'>
+                        <div className='col-md-5 mx-auto rounded border p-4'>
+                            <h4 className='text-center mb-4'>Search Instance</h4>
+
+                            <span className='row mb-3'>
+                                <label className='col-sm-2 col-form-label'>Year : </label>
+                                <div className='col-sm-3'>
+                                    <input
+                                        className='form-control'
+                                        value={searchYear}
+                                        onChange={(e) => setSearchYear(e.target.value)}
+                                        placeholder='Enter Year'
+                                    />
+                                </div>
+                                <label className='col-sm-3 col-form-label'>Semester : </label>
+                                <div className='col-sm-3'>
+                                    <select
+                                        className='form-control'
+                                        value={searchSemester}
+                                        onChange={(e) => setSearchSemester(e.target.value)}
+                                    >
+                                        <option value="">Select Semester</option>
+                                        {uniqueSemesters.map((sem, index) => (
+                                            <option key={index} value={sem}>{sem}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="row justify-content-center my-4">
                     <div className="col-md-10">
                         <div className="table-responsive">
                             <table className="table table-striped text-center">
                                 <thead>
                                     <tr>
-                                        <th className='col-6 text-start ps-3'>Course Title</th>
+                                        <th className='col-5 text-start ps-3'>Course Title</th>
                                         <th className='col-2 text-start ps-3'>Year-Sem</th>
-                                        <th className='col-2 text-start ps-3'>Code</th>
-                                        <th className='col text-start ps-3'>Action</th>
+                                        <th className='col-3 text-start ps-3'>Code</th>
+                                        <th className='col-2 text-start ps-3'>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {instances.map(instance => (
+                                    {filteredInstances.map(instance => (
                                         <tr key={instance.instances_id}>
                                             <td className="text-capitalize text-start ps-3"><strong>{instance.instances_title}</strong></td>
                                             <td className='text-start ps-3'>{instance.instances_year} - {instance.instances_sem}</td>
-                                            <td className='text-start ps-3'>{courses.find(course => course.course_id === instance.course_id)?.course_title}</td>
+                                            <td className='text-start ps-3'>{getCourseCodeByTitle(instance.instances_title)}</td>
                                             <td className='btnarea'>
                                                 <button className='btn click' data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Instance" onClick={() => handleEditClick(instance)}><FontAwesomeIcon icon={faUserPen} /></button>
                                                 <button className='btn click' data-bs-toggle="tooltip" data-bs-placement="top" title="View Instance" onClick={() => handleViewClick(instance)}><FontAwesomeIcon icon={faMagnifyingGlass} /></button>
@@ -145,26 +201,31 @@ const CreateInstance = () => {
                             <p className="text-capitalize"><strong>Editing Instance ID :</strong> {editingInstances.instances_id}</p>
                             <input type="hidden" name="instances_id" value={editingInstances.instances_id} />
                             <div className='row mb-3'>
-                                <label className='col-sm-4 col-form-label'>Instance Title</label>
+                                <label className='col-sm-4 col-form-label'>Course Title</label>
                                 <div className='col-sm-8'>
                                     <input className='form-control text-capitalize' name='instances_title' defaultValue={editingInstances.instances_title} required />
                                 </div>
                             </div>
                             <div className='row mb-3'>
-                                <label className='col-sm-4 col-form-label'>Instance Year</label>
+                                <label className='col-sm-4 col-form-label'>Year</label>
                                 <div className='col-sm-8'>
                                     <input className='form-control text-capitalize' name='instances_year' defaultValue={editingInstances.instances_year} required />
                                 </div>
                             </div>
                             <div className='row mb-3'>
-                                <label className='col-sm-4 col-form-label'>Instance Semester</label>
+                                <label className='col-sm-4 col-form-label'>Semester</label>
                                 <div className='col-sm-8'>
-                                    <input className='form-control text-capitalize' name='instances_sem' defaultValue={editingInstances.instances_sem} required />
+                                    <select className='form-control text-capitalize' name='instances_sem' defaultValue={editingInstances.instances_sem} required>
+                                        <option value="">Select Semester</option>
+                                        {uniqueSemesters.map((sem, index) => (
+                                            <option key={index} value={sem}>{sem}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
-                            <div className='row'>
-                                <div className='offset-sm-4 col-sm-7 py-3 d-flex'>
-                                    <button type='submit' className='btn btn-primary'>Update Instance</button>
+                            <div className="row">
+                                <div className='offset-sm-4 col-sm-7 d-flex'>
+                                    <button type='submit' className='btn btn-success'>Update</button>
                                     <button type='button' className='btn btn-secondary ms-3' onClick={() => setEditingInstances(null)}>Cancel</button>
                                 </div>
                             </div>
@@ -175,26 +236,10 @@ const CreateInstance = () => {
 
             {/* View Instance Details Modal */}
             {viewingInstance && (
-                <div className="edit-instances-modal col-5">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h4 className='my-4 text-center'>Instance Details</h4>
-                        </div>
-                        <div className='modal-body'>
-                            <p><strong>Instance ID:</strong> {viewingInstance.instances_id}</p>
-                            <p><strong>Course:</strong> {viewingInstance.instances_title}</p>
-                            <p><strong>Year:</strong> {viewingInstance.instances_year}</p>
-                            <p><strong>Semester:</strong> {viewingInstance.instances_sem}</p>
-
-                        </div>
-                        <div className='modal-footer'>
-                            <button type='button' className='btn btn-warning' onClick={() => setViewingInstance(null)}>Close</button>
-                        </div>
-                    </div>
-                </div>
+                <InstanceDetailsModal instance={viewingInstance} onClose={() => setViewingInstance(null)} />
             )}
         </>
-    );
+    )
 }
 
 export default CreateInstance;

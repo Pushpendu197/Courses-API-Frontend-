@@ -1,0 +1,258 @@
+import React, { useEffect, useState } from 'react';
+import './CreateInstance.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
+import { addinstances, deleteinstances, getinstances, updateinstances } from '../services/ApiServicesInstance';
+import { getcourse } from '../services/ApiService'; // Import the getcourse function
+import InstanceDetailsModal from './InstanceDetailsModal';
+
+const CreateInstance = () => {
+    const [instances, setInstances] = useState([]);
+    const [courses, setCourses] = useState([]); // State to store courses
+    const [editingInstances, setEditingInstances] = useState(null);
+    const [viewingInstance, setViewingInstance] = useState(null); // State to manage the viewing details modal
+    const [searchYear, setSearchYear] = useState('');
+    const [searchSemester, setSearchSemester] = useState('');
+
+    useEffect(() => {
+        getinstances().then(res => {
+            setInstances(res);
+        });
+        getcourse().then(res => {  // Fetch the courses
+            setCourses(res);
+        });
+    }, []);
+
+    const handleAddSubmit = (e) => {
+        e.preventDefault();
+        addinstances(e.target).then(res => {
+            setInstances(res);
+        });
+    }
+
+    const handleDeleteBtn = (id) => {
+        deleteinstances(id).then(() => {
+            setInstances(instances.filter(p => p.instances_id !== id));
+        });
+    }
+
+    const handleEditClick = (instance) => {
+        setEditingInstances(instance);
+    }
+
+    const handleViewClick = (instance) => {
+        setViewingInstance(instance);
+    }
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        const { instances_id, instances_title, instances_year, instances_sem } = e.target;
+        updateinstances(instances_id.value, {
+            instances_title: instances_title.value,
+            instances_year: instances_year.value,
+            instances_sem: instances_sem.value
+        }).then(res => {
+            setInstances(instances.map(c => (c.instances_id === res.instances_id ? res : c)));
+            setEditingInstances(null);
+        });
+    }
+
+    // Function to get the course code based on course title
+    const getCourseCodeByTitle = (title) => {
+        const course = courses.find(c => c.course_title === title);
+        return course ? course.course_code : 'N/A';
+    };
+
+    // Function to filter instances based on search criteria
+    const filteredInstances = instances.filter(instance =>
+        (searchYear ? instance.instances_year === searchYear : true) &&
+        (searchSemester ? instance.instances_sem === searchSemester : true)
+    );
+
+    return (
+        <>
+            <div className='createUser'>
+                <div className='container-create my-2'>
+                    <div className='row'>
+                        <div className='col-md-5 mx-auto rounded border p-4'>
+                            <h3 className='text-center mb-4'>Create Instances</h3>
+
+                            <form onSubmit={handleAddSubmit}>
+                                <div className='row mb-3'>
+                                    <label className='col-sm-4 col-form-label'>Course</label>
+                                    <div className='col-sm-8'>
+                                        <select className='form-control' name='instances_title' required>
+                                            <option value="">Select Course</option>
+                                            {courses.map(course => (
+                                                <option key={course.course_id} value={course.course_title}>
+                                                    {course.course_title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className='row mb-3'>
+                                    <label className='col-sm-4 col-form-label'>Year</label>
+                                    <div className='col-sm-8'>
+                                        <input className='form-control text-capitalize' name='instances_year' placeholder='Year' required />
+                                    </div>
+                                </div>
+                                <div className='row mb-3'>
+                                    <label className='col-sm-4 col-form-label'>Semester</label>
+                                    <div className='col-sm-8'>
+                                        <input className='form-control text-capitalize' name='instances_sem' placeholder='Semester' required />
+                                    </div>
+                                </div>
+                                <div className='row'>
+                                    <div className='offset-sm-4 col-sm-7 d-flex'>
+                                        <button type='submit' className='btn btn-primary'>Add Instance</button>
+                                        <Link to='/' className='btn btn-info ms-3'>Add Course</Link>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Search Section */}
+                <div className='container-search my-2'>
+                    <div className='row'>
+                        <div className='col-md-5 mx-auto rounded border p-4'>
+                            <h4 className='text-center mb-4'>Search Instance</h4>
+
+                            <span className='row mb-3'>
+                                <label className='col-sm-2 col-form-label'>Year : </label>
+                                <div className='col-sm-3'>
+                                    <input
+                                        className='form-control'
+                                        value={searchYear}
+                                        onChange={(e) => setSearchYear(e.target.value)}
+                                        placeholder='Enter Year'
+                                    />
+                                </div>
+                                <label className='col-sm-3 col-form-label'>Semester : </label>
+                                <div className='col-sm-3'>
+                                    <input
+                                        className='form-control'
+                                        value={searchSemester}
+                                        onChange={(e) => setSearchSemester(e.target.value)}
+                                        placeholder='Enter Semester'
+                                    />
+                                </div>
+                            </span>
+
+
+                            {/* <div className='row mb-3'>
+                                <label className='col-sm-4 col-form-label'>Semester</label>
+                                <div className='col-sm-8'>
+                                    <input
+                                        className='form-control'
+                                        value={searchSemester}
+                                        onChange={(e) => setSearchSemester(e.target.value)}
+                                        placeholder='Enter Semester'
+                                    />
+                                </div>
+                            </div> */}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row justify-content-center my-4">
+                    <div className="col-md-10">
+                        <div className="table-responsive">
+                            <table className="table table-striped text-center">
+                                <thead>
+                                    <tr>
+                                        <th className='col-5 text-start ps-3'>Course Title</th>
+                                        <th className='col-2 text-start ps-3'>Year-Sem</th>
+                                        <th className='col-3 text-start ps-3'>Code</th>
+                                        <th className='col-2 text-start ps-3'>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredInstances.map(instance => (
+                                        <tr key={instance.instances_id}>
+                                            <td className="text-capitalize text-start ps-3"><strong>{instance.instances_title}</strong></td>
+                                            <td className='text-start ps-3'>{instance.instances_year} - {instance.instances_sem}</td>
+                                            <td className='text-start ps-3'>{getCourseCodeByTitle(instance.instances_title)}</td>
+                                            <td className='btnarea'>
+                                                <button className='btn click' data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Instance" onClick={() => handleEditClick(instance)}><FontAwesomeIcon icon={faUserPen} /></button>
+                                                <button className='btn click' data-bs-toggle="tooltip" data-bs-placement="top" title="View Instance" onClick={() => handleViewClick(instance)}><FontAwesomeIcon icon={faMagnifyingGlass} /></button>
+                                                <button className='btn click' data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Instance" onClick={() => handleDeleteBtn(instance.instances_id)}><FontAwesomeIcon icon={faTrash} /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Edit Instance Form */}
+            {editingInstances && (
+                <div className="edit-instances-modal col-5">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h4 className='my-4 text-center'>Edit Instance</h4>
+                        </div>
+
+                        <form onSubmit={handleEditSubmit}>
+                            <p className="text-capitalize"><strong>Editing Instance ID :</strong> {editingInstances.instances_id}</p>
+                            <input type="hidden" name="instances_id" value={editingInstances.instances_id} />
+                            <div className='row mb-3'>
+                                <label className='col-sm-4 col-form-label'>Course Title</label>
+                                <div className='col-sm-8'>
+                                    <input className='form-control text-capitalize' name='instances_title' defaultValue={editingInstances.instances_title} required />
+                                </div>
+                            </div>
+                            <div className='row mb-3'>
+                                <label className='col-sm-4 col-form-label'>Year</label>
+                                <div className='col-sm-8'>
+                                    <input className='form-control text-capitalize' name='instances_year' defaultValue={editingInstances.instances_year} required />
+                                </div>
+                            </div>
+                            <div className='row mb-3'>
+                                <label className='col-sm-4 col-form-label'>Semester</label>
+                                <div className='col-sm-8'>
+                                    <input className='form-control text-capitalize' name='instances_sem' defaultValue={editingInstances.instances_sem} required />
+                                </div>
+                            </div>
+                            <div className='row'>
+                                <div className='offset-sm-4 col-sm-7 py-3 d-flex'>
+                                    <button type='submit' className='btn btn-primary'>Update Instance</button>
+                                    <button type='button' className='btn btn-secondary ms-3' onClick={() => setEditingInstances(null)}>Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Instance Details Modal */}
+            {viewingInstance && (
+                <div className="edit-instances-modal col-5">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h4 className='my-4 text-center'>Instance Details</h4>
+                        </div>
+                        <div className='modal-body'>
+                            <p><strong>Instance ID : </strong> {viewingInstance.instances_id}</p>
+                            <p><strong>Course Title : </strong> {viewingInstance.instances_title}</p>
+                            <p><strong>Year : </strong> {viewingInstance.instances_year}</p>
+                            <p><strong>Semester : </strong> {viewingInstance.instances_sem}</p>
+                            <p><strong>Course Code : </strong> {getCourseCodeByTitle(viewingInstance.instances_title)}</p>
+                        </div>
+                        <hr />
+                        <div className='modal-footer'>
+                            <button type='button' className='btn btn-warning' onClick={() => setViewingInstance(null)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
+export default CreateInstance;

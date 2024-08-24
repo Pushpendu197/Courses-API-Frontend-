@@ -1,0 +1,55 @@
+.table-responsive {
+    margin-top: 2rem;
+
+}
+
+.table thead tr th {
+    background-color: #5A80FB;
+    color: #fff;
+    text-align: left;
+
+
+}
+
+
+td {
+    border: 1px solid #cfcfd5;
+    border-collapse: collapse;
+
+}
+
+.table tbody tr td {
+    padding: 0;
+    text-align: left;
+}
+
+.click {
+    font-size: 18px;
+}
+
+.edit-course-modal {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    background-color: #5A80FB;
+    color: #fff;
+    height: 50px;
+    margin-bottom: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}

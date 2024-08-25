@@ -13,49 +13,66 @@ const CreateUser = () => {
     const [editingCourse, setEditingCourse] = useState(null);
 
     useEffect(() => {
-        getcourse().then(res => {
-            setCourses(res);
-        });
+        const fetchCourses = async () => {
+            try {
+                const coursesData = await getcourse();
+                setCourses(coursesData);
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        };
+
+        fetchCourses();
     }, []);
 
-    const handleAddSubmit = (e) => {
+    const handleAddSubmit = async (e) => {
         e.preventDefault();
-        addcourse(e.target).then(res => {
-            setCourses(res);
-        });
-    }
+        try {
+            const res = await addcourse(e.target);
+            setCourses(prevCourses => [...prevCourses, res]);
+        } catch (error) {
+            console.error('Error adding course:', error);
+        }
+    };
 
-    const handleDeleteBtn = (id) => {
-        deletecourse(id).then(() => {
-            setCourses(courses.filter(p => p.course_id !== id));
-        });
-    }
+    const handleDeleteBtn = async (id) => {
+        try {
+            await deletecourse(id);
+            setCourses(prevCourses => prevCourses.filter(p => p.course_id !== id));
+        } catch (error) {
+            console.error('Error deleting course:', error);
+        }
+    };
 
     const handleViewCourse = (course) => {
         setSelectedCourse(course);
-    }
+    };
 
     const handleEditClick = (course) => {
         setEditingCourse(course);
-    }
+    };
 
-    const handleEditSubmit = (e) => {
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
         const { course_id, course_title, course_code, course_desc } = e.target;
-        updatecourse(course_id.value, {
-            course_title: course_title.value,
-            course_code: course_code.value,
-            course_desc: course_desc.value
-        }).then(res => {
-            setCourses(courses.map(c => (c.course_id === res.course_id ? res : c)));
+        try {
+            const updatedCourse = {
+                course_title: course_title.value,
+                course_code: course_code.value,
+                course_desc: course_desc.value,
+            };
+            const res = await updatecourse(course_id.value, updatedCourse);
+            setCourses(prevCourses => prevCourses.map(c => (c.course_id === res.course_id ? res : c)));
             setEditingCourse(null);
-        });
-    }
+        } catch (error) {
+            console.error('Error updating course:', error);
+        }
+    };
 
     const closeModal = () => {
         setSelectedCourse(null);
         setEditingCourse(null);
-    }
+    };
 
     return (
         <>
@@ -67,21 +84,39 @@ const CreateUser = () => {
 
                             <form onSubmit={handleAddSubmit}>
                                 <div className='row mb-3'>
-                                    <label className='col-sm-4 col-form-label'>Course Title</label>
+                                    <label htmlFor='course_title' className='col-sm-4 col-form-label'>Course Title</label>
                                     <div className='col-sm-8'>
-                                        <input className='form-control text-capitalize' name='course_title' placeholder='Course Title' required></input>
+                                        <input
+                                            id='course_title'
+                                            className='form-control text-capitalize'
+                                            name='course_title'
+                                            placeholder='Course Title'
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <div className='row mb-3'>
-                                    <label className='col-sm-4 col-form-label'>Course Code</label>
+                                    <label htmlFor='course_code' className='col-sm-4 col-form-label'>Course Code</label>
                                     <div className='col-sm-8'>
-                                        <input className='form-control text-capitalize' name='course_code' placeholder='Course Code' required></input>
+                                        <input
+                                            id='course_code'
+                                            className='form-control text-capitalize'
+                                            name='course_code'
+                                            placeholder='Course Code'
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <div className='row mb-3'>
-                                    <label className='col-sm-4 col-form-label'>Course Description</label>
+                                    <label htmlFor='course_desc' className='col-sm-4 col-form-label'>Course Description</label>
                                     <div className='col-sm-8'>
-                                        <input className='form-control text-capitalize' name='course_desc' placeholder='Course Description' required></input>
+                                        <input
+                                            id='course_desc'
+                                            className='form-control text-capitalize'
+                                            name='course_desc'
+                                            placeholder='Course Description'
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <div className='row'>
@@ -90,6 +125,7 @@ const CreateUser = () => {
                                         <Link to='/addinstance' className='btn btn-info ms-3'>Add Instance</Link>
                                     </div>
                                 </div>
+                                <p className='text-center subtext'>** in case at the time of Records any interrupted occurs, please Reload the Page **</p>
                             </form>
                         </div>
                     </div>
@@ -141,19 +177,19 @@ const CreateUser = () => {
                             <div className='row mb-3'>
                                 <label className='col-sm-4 col-form-label'>Course Title</label>
                                 <div className='col-sm-8'>
-                                    <input className='form-control text-capitalize' name='course_title' defaultValue={editingCourse.course_title} required></input>
+                                    <input className='form-control text-capitalize' name='course_title' defaultValue={editingCourse.course_title} required />
                                 </div>
                             </div>
                             <div className='row mb-3'>
                                 <label className='col-sm-4 col-form-label'>Course Code</label>
                                 <div className='col-sm-8'>
-                                    <input className='form-control text-capitalize' name='course_code' defaultValue={editingCourse.course_code} required></input>
+                                    <input className='form-control text-capitalize' name='course_code' defaultValue={editingCourse.course_code} required />
                                 </div>
                             </div>
                             <div className='row mb-3'>
-                                <label className='col-sm-4  col-form-label'>Course Description</label>
+                                <label className='col-sm-4 col-form-label'>Course Description</label>
                                 <div className='col-sm-8'>
-                                    <input className='form-control text-capitalize' name='course_desc' defaultValue={editingCourse.course_desc} required></input>
+                                    <input className='form-control text-capitalize' name='course_desc' defaultValue={editingCourse.course_desc} required />
                                 </div>
                             </div>
                             <div className='row'>
@@ -168,6 +204,6 @@ const CreateUser = () => {
             )}
         </>
     );
-}
+};
 
 export default CreateUser;

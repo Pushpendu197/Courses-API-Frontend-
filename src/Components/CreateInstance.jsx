@@ -4,40 +4,50 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import { addinstances, deleteinstances, getinstances, updateinstances } from '../services/ApiServicesInstance';
-import { getcourse } from '../services/ApiService'; // Import the getcourse function
-
+import { getcourse } from '../services/ApiService';
 
 const CreateInstance = () => {
     const [instances, setInstances] = useState([]);
-    const [courses, setCourses] = useState([]); // State to store courses
+    const [courses, setCourses] = useState([]);
     const [editingInstances, setEditingInstances] = useState(null);
-    const [viewingInstance, setViewingInstance] = useState(null); // State to manage the viewing details modal
+    const [viewingInstance, setViewingInstance] = useState(null);
     const [searchYear, setSearchYear] = useState('');
     const [searchSemester, setSearchSemester] = useState('');
 
-    // Get unique semesters
     const uniqueSemesters = [...new Set(instances.map(instance => instance.instances_sem))];
 
     useEffect(() => {
-        getinstances().then(res => {
-            setInstances(res);
-        });
-        getcourse().then(res => {  // Fetch the courses
-            setCourses(res);
-        });
+        const fetchData = async () => {
+            try {
+                const instancesData = await getinstances();
+                setInstances(instancesData);
+                const coursesData = await getcourse();
+                setCourses(coursesData);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        fetchData();
     }, []);
 
-    const handleAddSubmit = (e) => {
+    const handleAddSubmit = async (e) => {
         e.preventDefault();
-        addinstances(e.target).then(res => {
-            setInstances(res);
-        });
+        try {
+            const newInstance = await addinstances(e.target);
+            setInstances(prevInstances => [...prevInstances, newInstance]);
+        } catch (error) {
+            console.error("Error adding instance:", error);
+        }
     }
 
-    const handleDeleteBtn = (id) => {
-        deleteinstances(id).then(() => {
-            setInstances(instances.filter(p => p.instances_id !== id));
-        });
+    const handleDeleteBtn = async (id) => {
+        try {
+            await deleteinstances(id);
+            setInstances(prevInstances => prevInstances.filter(p => p.instances_id !== id));
+        } catch (error) {
+            console.error("Error deleting instance:", error);
+        }
     }
 
     const handleEditClick = (instance) => {
@@ -48,26 +58,29 @@ const CreateInstance = () => {
         setViewingInstance(instance);
     }
 
-    const handleEditSubmit = (e) => {
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
         const { instances_id, instances_title, instances_year, instances_sem } = e.target;
-        updateinstances(instances_id.value, {
-            instances_title: instances_title.value,
-            instances_year: instances_year.value,
-            instances_sem: instances_sem.value
-        }).then(res => {
-            setInstances(instances.map(c => (c.instances_id === res.instances_id ? res : c)));
+        try {
+            const updatedInstance = await updateinstances(instances_id.value, {
+                instances_title: instances_title.value,
+                instances_year: instances_year.value,
+                instances_sem: instances_sem.value
+            });
+            setInstances(prevInstances =>
+                prevInstances.map(c => (c.instances_id === updatedInstance.instances_id ? updatedInstance : c))
+            );
             setEditingInstances(null);
-        });
+        } catch (error) {
+            console.error("Error updating instance:", error);
+        }
     }
 
-    // Function to get the course code based on course title
     const getCourseCodeByTitle = (title) => {
         const course = courses.find(c => c.course_title === title);
         return course ? course.course_code : 'N/A';
     };
 
-    // Function to filter instances based on search criteria
     const filteredInstances = instances.filter(instance =>
         (searchYear ? instance.instances_year === searchYear : true) &&
         (searchSemester ? instance.instances_sem === searchSemester : true)
@@ -118,7 +131,6 @@ const CreateInstance = () => {
                     </div>
                 </div>
 
-                {/* Search Section */}
                 <div className='container-search my-2'>
                     <div className='row'>
                         <div className='col-md-5 mx-auto rounded border p-4'>
@@ -147,21 +159,7 @@ const CreateInstance = () => {
                                         ))}
                                     </select>
                                 </div>
-
                             </span>
-
-
-                            {/* <div className='row mb-3'>
-                                <label className='col-sm-4 col-form-label'>Semester</label>
-                                <div className='col-sm-8'>
-                                    <input
-                                        className='form-control'
-                                        value={searchSemester}
-                                        onChange={(e) => setSearchSemester(e.target.value)}
-                                        placeholder='Enter Semester'
-                                    />
-                                </div>
-                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -198,7 +196,6 @@ const CreateInstance = () => {
                 </div>
             </div>
 
-            {/* Edit Instance Form */}
             {editingInstances && (
                 <div className="edit-instances-modal col-5">
                     <div className="modal-content">
@@ -238,7 +235,6 @@ const CreateInstance = () => {
                 </div>
             )}
 
-            {/* View Instance Details Modal */}
             {viewingInstance && (
                 <div className="edit-instances-modal col-5">
                     <div className="modal-content">

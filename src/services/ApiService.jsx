@@ -1,25 +1,48 @@
 import axios from 'axios';
 
-export function getcourse() {
-    return axios.get('http://127.0.0.1:8000/course/')
-        .then(res => res.data);
-}
+const API_URL = 'http://127.0.0.1:8000/course/';
 
-export function addcourse(course) {
-    return axios.post('http://127.0.0.1:8000/course/', {
-        course_id: null,
-        course_title: course.course_title.value,
-        course_code: course.course_code.value,
-        course_desc: course.course_desc.value,
-    }).then(res => res.data);
-}
+export const getcourse = async () => {
+    try {
+        const response = await axios.get(API_URL);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        throw error;
+    }
+};
 
-export function deletecourse(id) {
-    return axios.delete('http://127.0.0.1:8000/course/' + id + '/')
-        .then(res => res.data);
-}
+export const addcourse = async (course) => {
+    try {
+        const response = await axios.post(API_URL, {
+            course_id: null,
+            course_title: course.course_title.value,
+            course_code: course.course_code.value,
+            course_desc: course.course_desc.value,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error adding course:', error);
+        throw error;
+    }
+};
 
-export function updatecourse(id, updatedCourse) {
-    return axios.put('http://127.0.0.1:8000/course/' + id + '/', updatedCourse)
-        .then(res => res.data);
-}
+export const deletecourse = async (id) => {
+    try {
+        const response = await axios.delete(`${API_URL}${id}/`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting course:', error);
+        throw error;
+    }
+};
+
+export const updatecourse = async (id, updatedCourse) => {
+    try {
+        const response = await axios.put(`${API_URL}${id}/`, updatedCourse);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating course:', error);
+        throw error;
+    }
+};
